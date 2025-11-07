@@ -11,7 +11,7 @@ authors = [
   {name = "Weipeng Xu", email = "wxuby@connect.ust.hk"},
   {name = "Tianju Xue", email = "cetxue@ust.hk"}
 ]
-description = "Topology optimization with automatic differentiaition via JAX"
+description = "Topology optimization with automatic differentiaition in JAX"
 readme = "README.md"
 license = {file = "LICENSE"}
 

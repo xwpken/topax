@@ -10,7 +10,7 @@ Topology optimization with automatic differentiaition in JAX
 * Hands-free adjoint sensitivity analysis via automatic differentiation
 
 ## Installation
-Since `topax` is built on top of [`jax-fem`](https://github.com/deepmodeling/jax-fem), please follow the [instructions](https://github.com/deepmodeling/jax-fem?tab=readme-ov-file#installation) to install [`jax-fem`](https://github.com/deepmodeling/jax-fem) first. Then activate the built conda environment and clone this repository:
+Since `topax` is built on top of [`jax-fem`](https://github.com/deepmodeling/jax-fem), please follow the [instructions](https://deepmodeling.github.io/jax-fem/guide/Installation.html) to install [`jax-fem`](https://github.com/deepmodeling/jax-fem) first. Then activate the built conda environment and clone this repository:
 
 ```bash
 git clone https://github.com/xwpken/topax.git
