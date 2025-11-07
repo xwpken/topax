@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=43.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "topax" 
+version = "0.0.1"
+requires-python = ">=3.10"
+urls = {homepage = "https://github.com/xwpken/topax"}
+authors = [ 
+  {name = "Weipeng Xu", email = "wxuby@connect.ust.hk"},
+  {name = "Tianju Xue", email = "cetxue@ust.hk"}
+]
+description = "Topology optimization with automatic differentiaition via JAX"
+readme = "README.md"
+license = {file = "LICENSE"}
+
+[tool.setuptools]
+packages = ["topax"]
+package-dir = {"" = "src"}
