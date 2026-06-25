@@ -1,1 +1,3 @@
-from .heaviside import Heaviside__all__ = ['Heaviside']
+from .heaviside import Heaviside
+
+__all__ = ['Heaviside']

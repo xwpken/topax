@@ -1,1 +1,4 @@
-from .base import Topologyclass LevelSet(Topology):    pass
+from .base import Topology
+
+class LevelSet(Topology):
+    pass

@@ -1,1 +1,13 @@
-from abc import ABC, abstractmethodclass Algorithm(ABC):    """Base class for all optimization algorithms"""        @abstractmethod    def update(self, x, objective_grad, constraint_grads):        """Update design variables"""        pass        def reset(self):        """Reset algorithm state (optional)"""        pass
+from abc import ABC, abstractmethod
+
+class Algorithm(ABC):
+    """Base class for all optimization algorithms"""
+    
+    @abstractmethod
+    def update(self, x, objective_grad, constraint_grads):
+        """Update design variables"""
+        pass
+    
+    def reset(self):
+        """Reset algorithm state (optional)"""
+        pass
