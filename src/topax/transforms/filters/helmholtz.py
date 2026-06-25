@@ -1,15 +1,9 @@
-'''
-
-Filters for topology optimization
-    
-Last modified: 29/06/2024
-
-'''
-
 import jax
 import jax.numpy as np
-import scipy
+
+
 import numpy as onp
+import scipy
 
 from jax_fem.problem import Problem
 from jax_fem.solver import ad_wrapper

@@ -1,48 +1,32 @@
+from typing import Dict, Type
 
-import jax.numpy as np
-
-import numpy as onp
-
-class OC:
+class Optimizer:
     
-    def __init__(self, move, volfrac, num_x, proj_fns=None, compute_volume=None):
-        
-        self.move = move
-        self.volfrac = volfrac
-        self.proj_fns = proj_fns if proj_fns is not None else lambda x: x
-        # default: unit element volume (1)
-        self.compute_volume = compute_volume if compute_volume is not None else lambda x: onp.sum(x)
-        self.obj_volume = self.volfrac * self.compute_volume(onp.ones((num_x, 1)))
-        
-    def update(self, x, dJ, dV):
-        
-        l1, l2 = 0, 1e9
-                   
-        maximum = np.maximum
-        minimum = np.minimum
-        
-        while (l2-l1)/(l1+l2) > 1e-3:
-        
-          lmid = 0.5*(l2+l1)
-          xnew = maximum(0,
-                         maximum(x - self.move,
-                                 minimum(1,
-                                         minimum(x + self.move, 
-                                                 x * np.sqrt(-dJ/dV/lmid)))))
-          
-          xPhys = self.proj_fns(xnew)
-          
-          if self.compute_volume(xPhys) > self.obj_volume:
-              l1 = lmid
-          else:
-              l2 = lmid
-              
-        return xnew
-        
-    def set_proj_fns(self, proj_fns):
-        self.proj_fns = proj_fns
-        
-
-class MMA:
+    """Main optimizer class"""
     
-    pass
+    _algorithms: Dict[str, Type] = {}  
+    
+    def __init__(self, method: str, options: dict = None):
+        self.method = method.lower()
+        self.options = options or {}
+        
+        if self.method not in self._algorithms:
+            available = list(self._algorithms.keys())
+            raise ValueError(f"Unknown optimization method: {method}. Available: {available}")
+        
+        algorithm_class = self._algorithms[self.method]
+        self.algorithm = algorithm_class(**self.options)
+    
+    def update(self, *args, **kwargs):
+        return self.algorithm.update(*args, **kwargs)
+    
+    @classmethod
+    def register_algorithm(cls, name: str):
+        def decorator(algorithm_class):
+            cls._algorithms[name.lower()] = algorithm_class
+            return algorithm_class
+        return decorator
+    
+    @classmethod
+    def available_algorithms(cls):
+        return list(cls._algorithms.keys())
