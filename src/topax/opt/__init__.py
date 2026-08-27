@@ -1,4 +1,5 @@
-from .optimizer import Optimizer
-from . import algorithms
+from .base import Optimizer
+from .oc import OC
+from .mma import MMA
 
-__all__ = ['Optimizer']
+__all__ = ['Optimizer', 'OC', 'MMA']

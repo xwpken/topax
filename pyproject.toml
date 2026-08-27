@@ -11,10 +11,15 @@ authors = [
   {name = "Weipeng Xu", email = "wxuby@connect.ust.hk"},
   {name = "Tianju Xue", email = "cetxue@ust.hk"}
 ]
-description = "Topology optimization with automatic differentiaition in JAX"
+description = "Topology optimization with automatic differentiation in JAX"
+dependencies = [
+    "mmapy>=0.3",
+]
 readme = "README.md"
 license = {file = "LICENSE"}
 
-[tool.setuptools]
-packages = ["topax"]
-package-dir = {"" = "src"}
+[tool.setuptools.packages]
+find = {where = ["src"]}
+
+[tool.setuptools.package-dir]
+"" = "src"

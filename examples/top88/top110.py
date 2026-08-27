@@ -18,12 +18,12 @@ import matplotlib.pyplot as plt
 from jax_fem import logger
 logger.setLevel("WARNING")
 
-from topax.topology import Density
-from topax.models import SIMP
-from topax.transforms import ConvolutionFilter, Heaviside
-from topax.opt import Optimizer
+from topax.top import Density
+from topax.mat import SIMP
+from topax.tfp import Conv, Projection
+from topax.opt import OC
 
-from mbb_beam import prep_fem
+from problem import prep_fem
 
 
 #%% SETUP
@@ -52,29 +52,30 @@ def volume_constraints(xPhys):
     return g
 
 # filters
-conv2d = ConvolutionFilter(problem, options={'rmin': rmin})
-rho_filter = conv2d if use_density_filter else lambda x: x
-dJ_filter = conv2d if use_sensitivity_filter else lambda x: x[0]
+conv2d = Conv(problem, rmin=rmin)
+rho_filter = conv2d.density() if use_density_filter else lambda x: x
+sens_filter = conv2d.sensitivity() if use_sensitivity_filter else lambda dc, x: dc
+
 
 # projection
 beta = 1.0
-heaviside = Heaviside(method='Guest2004',options={'beta':beta})
+proj = Projection(method='guest', beta=beta)
 
 # optimizer
-OC = Optimizer(method='OC', options={'move':0.2, 'damping':0.5})
+OC = OC(move=0.2, damping=0.5)
 
 # topology 
 x0 = vf * np.ones((Nx*Ny, 1))
-topology = Density(problem, 
-                   x=x0, transform=rho_filter+heaviside,
+topo = Density(problem, 
+                   x=x0, transform=rho_filter+proj,
                    obj=J_total, cons=[volume_constraints,])
 
 #%% OPTIMIZATION LOOP
 loop_beta = 0
 loop = 0
 change = 1
-xnew, xTilde, xPhys = topology.get_intermediate_values()
-while change>0.01 and loop<500:
+xnew, xTilde, xPhys = topo.trace()
+while change>0.01:
     loop_beta += 1
     loop += 1
     # Be careful!
@@ -83,33 +84,33 @@ while change>0.01 and loop<500:
         # however, this may need further check
         J, dJ = jax.value_and_grad(J_total)(xPhys)
         c, dc = jax.value_and_grad(volume_constraints)(xPhys)
-        dx = heaviside.grad(xTilde)
+        dx = proj.grad(xTilde)
         dJ = conv2d.H @ ((dJ*dx)/conv2d.Hs)
         dc = conv2d.H @ ((dc*dx)/conv2d.Hs)
     else:
         # evaluate
-        J, dJ, c, dc = topology.evaluate()
+        J, dJ, c, dc = topo.eval()
         dc = dc[0]
     # filter
-    xold = (topology.x).copy()
-    dJ = dJ_filter((dJ, xold))
+    xold = (topo.x).copy()
+    dJ = sens_filter(dJ, xold)
     # update
-    xnew = OC.update(topology, dJ, dc, vf)
-    topology.update(xnew)
-    vol = topology.compute_volume_fraction()
+    xnew = OC.update(topo, dJ, dc, vf)
+    topo.update(xnew)
+    vol = topo.compute_vf()
     change = np.max(np.abs(xnew-xold))
     print(f' It.:{loop:5d}, Obj.:{J:11.4f}, Vol.:{vol:7.3f}, ch.:{change:7.3f}')
     # image
-    field = onp.flip(topology.xPhys.reshape(Ny, Nx, order='F'),axis=0)
+    field = onp.flip(topo.x_phys.reshape(Ny, Nx, order='F'),axis=0)
     plt.imshow(field, cmap='gray_r', vmin=0, vmax=1)
     plt.axis('equal')
     plt.axis('off')
-    plt.show()
+    plt.pause(0.01)
     # update projection
     if beta < 512 and (loop_beta>=50 or change <=0.01):
-        xnew, xTilde, xPhys = topology.get_intermediate_values()
+        xnew, xTilde, xPhys = topo.trace()
         beta = 2 * beta
-        heaviside.set_params(beta=beta)
+        proj.set_params(beta=beta)
         loop_beta = 0
         change = 1
         print(f' Parameter beta increased to {beta}')

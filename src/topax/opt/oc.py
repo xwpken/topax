@@ -2,17 +2,14 @@ from typing import Any
 
 import jax.numpy as np
 
-from .base import Algorithm
-from ..optimizer import Optimizer
+from .base import Optimizer
 
-@Optimizer.register_algorithm("oc")
-class OC(Algorithm):
-    
+
+class OC(Optimizer):
+
     """Optimality Criteria optimizer"""
-    
-    def __init__(self, move:float=0.2, 
-                       damping:float=0.5, 
-                       **kwargs:Any):
+
+    def __init__(self, move: float = 0.2, damping: float = 0.5, **kwargs: Any):
         self.move = move
         self.damping = damping
     
@@ -20,7 +17,7 @@ class OC(Algorithm):
         """OC update implementation"""
         
         xold = topology.x
-        compute_vf = topology.compute_volume_fraction  
+        compute_vf = topology.compute_vf  
         
         # Use bisection method to find appropriate lag multiplier
         lag = self._bisection(xold, dJ, dc, vf, compute_vf)
@@ -34,7 +31,7 @@ class OC(Algorithm):
     def _bisection(self, x, dJ, dc, vf, compute_vf):
         """Bisection method for lag multiplier calculation"""
         
-        l1, l2 = 0, 1e9
+        l1, l2 = 1e-9, 1e9
         tol = 1e-3
         
         while (l2-l1)/(l1+l2) > tol:
@@ -56,8 +53,10 @@ class OC(Algorithm):
         return lmid
     
     def _oc_update(self, x, dJ, dc, lag):
-        """OC update formula"""
-        return x * (-dJ / dc /lag) ** self.damping
+        """OC update formula (handles mixed-sign sensitivities)"""
+        ratio = -dJ / (dc * lag)
+        ratio = np.maximum(ratio, 1e-10)
+        return x * ratio ** self.damping
     
     def _apply_constraints(self, xold, xnew):
         """Apply move limits and boundary constraints"""

@@ -1,203 +1,118 @@
-# Import some useful modules.
-import numpy as onp
+"""
+
+2D hyperelasticity topology optimization with geometric nonlinearity
+
+See Wang et al., "Interpolation scheme for fictitious domain techniques and
+topology optimization of finite strain elastic problems", CMAME, 2014.
+
+Continuation schemes (Section 5.1):
+  - p (SIMP penalization): 1 -> 3, Dp=0.05
+    updated every 2 iterations when p < 2, every 5 when p >= 2
+  - beta (density Heaviside, Eq.7): 4 -> 64, doubled every 10 iterations
+    active only after p reaches max
+
+"""
+
 import jax
 import jax.numpy as np
-import os
-import glob
+jax.config.update("jax_enable_x64", True)
+
+import numpy as onp
 import matplotlib.pyplot as plt
 
+from jax_fem import logger
+logger.setLevel("WARNING")
 
-# Import JAX-FEM specific modules.
-from jax_fem.problem import Problem
-from jax_fem.solver import solver, ad_wrapper
-from jax_fem.utils import save_sol
-from jax_fem.generate_mesh import get_meshio_cell_type, Mesh, rectangle_mesh
-from jax_fem.mma import optimize
+from topax.top import Density
+from topax.mat import SIMP
+from topax.opt import OC
+from topax.tfp import Conv, Projection
 
-
-class hyperelastic(Problem):
-    def custom_init(self):
-        """Override base class method.
-        Modify self.flex_inds so that location-specific TO can be realized.
-        """
-        self.fe = self.fes[0]
-        self.fe.flex_inds = np.arange(len(self.fe.cells))
-
-    def get_tensor_map(self):
-        """Override base class method.
-        """
-        def stress(u_grad, theta):
-            # Plane stress assumption
-            # Reference: https://en.wikipedia.org/wiki/Hooke%27s_law
-            Emax = 1
-            Emin = 1e-9*Emax
-            nu = 0.4
-            penal = 3.
-            E = Emin + (Emax - Emin)*theta[0]**penal
-            
-            mu = E/(2.*(1.+nu))
-            lmbda = E*nu/((1+nu)*(1-2*nu)) # plane strain
-            lmbda = 2*mu*lmbda/(lmbda+2*mu) # plane stress
-            
-            beta = 500
-            rho_0 = 0.01
-            gamma = (np.tanh(beta * rho_0) + np.tanh(beta * (theta[0]**penal - rho_0)))\
-                   /(np.tanh(beta * rho_0) + np.tanh(beta * (1 - rho_0)))
-            
-            # Linear energy --> Phi_l(u)
-            epsilon_linear = 0.5*(u_grad + u_grad.T)
-            sigma = lmbda * np.trace(epsilon_linear) * np.eye(self.dim) + 2 * mu * epsilon_linear
-            
-            # Linear energy --> Phi_l(gamma * u)
-            u_grad = gamma * u_grad
-            epsilon_linear = 0.5*(u_grad + u_grad.T)
-            sigma_gamma = lmbda * np.trace(epsilon_linear) * np.eye(self.dim) + 2 * mu * epsilon_linear
-            
-            # Nonlinear energy --> Phi_nl(gamma * u) 
-            I = np.eye(self.dim)
-            F = (u_grad + I)
-            # J = np.linalg.det(F)
-            epsilon = 0.5 * (F.T @ F - I)
-            S = lmbda * np.trace(epsilon) * np.eye(self.dim) + 2 * mu * epsilon
-            P_gamma = F @ S
-            
-            return P_gamma - sigma_gamma + sigma
-        return stress
-
-    def get_surface_maps(self):
-        def surface_map(u, x):
-            return np.array([0., 0.012])
-        return [surface_map]
-
-    def set_params(self, params):
-        """Override base class method.
-        """
-        full_params = np.ones((self.fe.num_cells, params.shape[0]))
-        full_params = full_params.at[self.fe.flex_inds].set(params)
-        thetas = np.repeat(full_params[:, None, :], self.fe.num_quads, axis=1)
-        self.full_params = full_params
-        self.internal_vars = [thetas]
-
-    def compute_compliance(self, sol):
-        """Surface integral
-        """
-        boundary_inds = self.boundary_inds_list[0]
-        _, nanson_scale = self.fe.get_face_shape_grads(boundary_inds)
-        # (num_selected_faces, 1, num_nodes, vec) * # (num_selected_faces, num_face_quads, num_nodes, 1)    
-        u_face = sol[self.fe.cells][boundary_inds[:, 0]][:, None, :, :] * self.fe.face_shape_vals[boundary_inds[:, 1]][:, :, :, None]
-        u_face = np.sum(u_face, axis=2) # (num_selected_faces, num_face_quads, vec)
-        # (num_cells, num_faces, num_face_quads, dim) -> (num_selected_faces, num_face_quads, dim)
-        
-        # subset_quad_points = self.get_physical_surface_quad_points(boundary_inds)
-
-        subset_quad_points = self.physical_surface_quad_points[0]
-
-        neumann_fn = self.get_surface_maps()[0]
-        traction = -jax.vmap(jax.vmap(neumann_fn))(u_face, subset_quad_points) # (num_selected_faces, num_face_quads, vec)
-        val = np.sum(traction * u_face * nanson_scale[:, :, None])
-        return val
-    
-    
-# Do some cleaning work. Remove old solution files.
-data_path = os.path.join(os.path.dirname(__file__), 'data') 
-files = glob.glob(os.path.join(data_path, f'vtk/*'))
-for f in files:
-    os.remove(f)
-    
-
-ele_type = 'QUAD4'
-cell_type = get_meshio_cell_type(ele_type)
-Lx, Ly = 1.2, 0.3
-Nx, Ny = 80, 20
-meshio_mesh = rectangle_mesh(Nx=Nx, Ny=Ny, domain_x=Lx, domain_y=Ly)
-mesh = Mesh(meshio_mesh.points, meshio_mesh.cells_dict[cell_type])
+from problem import prep_fem
 
 
-def fixed_location(point):
-    return np.isclose(point[0], 0., atol=1e-5)
-    
-def load_location(point):
-    return np.logical_and(np.isclose(point[0], Lx, atol=1e-5), np.isclose(point[1], Ly/2, atol = 2*(Ly/Ny) + 1e-5))
+#%% SETUP
+vf = 0.5
 
-def dirichlet_val(point):
-    return 0.
+xPhys2Mat = SIMP(E_max=1, E_min=1e-9, penal=3)
 
-dirichlet_bc_info = [[fixed_location]*2, [0, 1], [dirichlet_val]*2]
-
-location_fns = [load_location]
-
-problem = hyperelastic(mesh, vec=2, dim=2, ele_type=ele_type, dirichlet_bc_info=dirichlet_bc_info, location_fns=location_fns)
+Nx, Ny = 120, 30
+Lx, Ly = 1.0, 0.25
+fwd_pred, problem = prep_fem(Nx, Ny, Lx, Ly, xPhys2Mat)
 
 
-
-# Apply the automatic differentiation wrapper. 
-# The flag 'use_petsc' specifies how the forward problem (could be linear or nonlinear) 
-# and the backward adjoint problem (always linear) should be solved by specifying use_petsc_adjoint. 
-# This is a critical step that makes the problem solver differentiable.
-fwd_pred = ad_wrapper(problem, linear=False, use_petsc=True, use_petsc_adjoint=True)
-
-
-# Define the objective function 'J_total(theta)'. 
-# In the following, 'sol = fwd_pred(params)' basically says U = U(theta).
-def J_total(params):
-    # J(u(theta), theta)   
-    sol_list = fwd_pred(params)
+def J_total(xPhys):
+    sol_list = fwd_pred(xPhys)
     compliance = problem.compute_compliance(sol_list[0])
     return compliance
 
 
-# Output solution files to local disk
-outputs = []
-def output_sol(params, obj_val):
-    print(f"\nOutput solution - need to solve the forward problem again...")
-    sol_list = fwd_pred(params)
-    sol = sol_list[0]
-    vtu_path = os.path.join(data_path, f'vtk/sol_{output_sol.counter:03d}.vtu')
-    save_sol(problem.fe, np.hstack((sol, np.zeros((len(sol), 1)))), vtu_path, cell_infos=[('theta', problem.full_params[:, 0])])
-    print(f"compliance = {obj_val}")
-    outputs.append(obj_val)
-    output_sol.counter += 1
-output_sol.counter = 0
+def volume_constraint(xPhys):
+    g = np.sum(xPhys) - vf * (xPhys.size)
+    return g
 
 
-# Prepare J_total and dJ/d(theta) that are required by the MMA optimizer.
-def objectiveHandle(rho):
-    # MMA solver requires (J, dJ) as inputs
-    # J has shape ()
-    # dJ has shape (...) = rho.shape
-    J, dJ = jax.value_and_grad(J_total)(rho)
-    output_sol(rho, J)
-    return J, dJ
+# Density filter (r=a/8, a=Ly=0.25, converted to element units: 0.03125/(0.25/30)=3.75)
+conv2d = Conv(problem, rmin=3.75)
+density_filter = conv2d.density()
+
+# Density Heaviside projection (Eq.7) with continuation beta
+density_proj = Projection('wang', beta=4, eta=0.5)
+transform = lambda x: density_proj(density_filter(x))
+
+optimizer = OC(move=0.1, damping=0.5)
+
+x0 = vf * np.ones((Nx * Ny, 1))
+topo = Density(problem,
+               x=x0, transform=transform,
+               obj=J_total, cons=[volume_constraint])
 
 
-# Prepare g and dg/d(theta) that are required by the MMA optimizer.
-def consHandle(rho, epoch):
-    # MMA solver requires (c, dc) as inputs
-    # c should have shape (numConstraints,)
-    # dc should have shape (numConstraints, ...)
-    def computeGlobalVolumeConstraint(rho):
-        g = np.mean(rho)/vf - 1.
-        return g
-    c, gradc = jax.value_and_grad(computeGlobalVolumeConstraint)(rho)
-    c, gradc = c.reshape((1,)), gradc[None, ...]
-    return c, gradc
+#%% OPTIMIZATION LOOP with continuation
+p = 1.0
+beta = 4.0
+heaviside_active = False
+iters_since_p_upd = 0
+iters_since_b_upd = 0
 
+loop = 0
+change = 1
+xnew = x0
+while change > 0.01 and loop < 200:
+    loop += 1
+    iters_since_p_upd += 1
+    iters_since_b_upd += 1
 
-# Finalize the details of the MMA optimizer, and solve the TO problem.
-vf = 0.5
-optimizationParams = {'maxIters':200, 'movelimit':0.1}
-rho_ini = vf*np.ones((len(problem.fe.flex_inds), 1))
-numConstraints = 1
-optimize(problem.fe, rho_ini, optimizationParams, objectiveHandle, consHandle, numConstraints)
-print(f"As a reminder, compliance = {J_total(np.ones((len(problem.fe.flex_inds), 1)))} for full material")
+    # p continuation: 1 -> 3, Dp=0.05
+    if not heaviside_active:
+        update_interval = 2 if p < 2.0 else 5
+        if iters_since_p_upd >= update_interval and p < 3.0:
+            p = min(p + 0.05, 3.0)
+            iters_since_p_upd = 0
+        if p >= 3.0:
+            heaviside_active = True
 
+    # beta (Heaviside) continuation: 4 -> 64, doubled every 10 iters
+    if heaviside_active:
+        if iters_since_b_upd >= 10 and beta < 64.0:
+            beta = min(beta * 2, 64.0)
+            iters_since_b_upd = 0
 
-# Plot the optimization results.
-obj = onp.array(outputs)
-plt.figure(figsize=(10, 8))
-plt.plot(onp.arange(len(obj)) + 1, obj, linestyle='-', linewidth=2, color='black')
-plt.xlabel(r"Optimization step", fontsize=20)
-plt.ylabel(r"Objective value", fontsize=20)
-plt.tick_params(labelsize=20)
-plt.tick_params(labelsize=20)
-plt.show()
+    xPhys2Mat.penal = p
+    density_proj.set_params(beta=beta)
+
+    J, dJ, c, dc = topo.eval()
+    dc = dc[0]
+    xold = topo.x.copy()
+    xnew = optimizer.update(topo, dJ, dc, vf)
+    topo.update(xnew)
+    vol = topo.compute_vf()
+    change = np.max(np.abs(xnew - xold))
+    status = f'p={p:.2f}' if not heaviside_active else f'beta={beta:.0f}'
+    print(f' {status:>10s}  It.:{loop:5d}, Obj.:{J:11.4e}, '
+          f'Vol.:{vol:7.3f}, ch.:{change:7.3f}')
+    field = onp.flip(topo.x_phys.reshape(Ny, Nx, order='F'), axis=0)
+    plt.imshow(field, cmap='gray_r', vmin=0, vmax=1)
+    plt.axis('equal')
+    plt.axis('off')
+    plt.pause(0.01)

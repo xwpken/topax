@@ -1,6 +1,6 @@
 '''
 
-2D MBB beam fem model
+2D MBB beam 
 
 See https://link.springer.com/article/10.1007/s00158-010-0594-7
 
@@ -37,7 +37,7 @@ class Elasticity(Problem):
     
     def get_surface_maps(self):
         def surface_map(u, x):
-            return np.array([0., 2.])
+            return np.array([0., 1.])
         return [surface_map]
 
     def set_params(self, params):
@@ -97,9 +97,10 @@ def prep_fem(Nx, Ny, Lx, Ly, xPhys2Mat):
                          additional_info=(xPhys2Mat,))
     
     # Differentiable wrapper
+    solver_options = {'petsc_solver':{'ksp_type': 'preonly', 'pc_type': 'lu'}}
     fwd_pred = ad_wrapper(problem, 
-                          solver_options={'umfpack_solver':{}},
-                          adjoint_solver_options={'umfpack_solver':{}})
+                          solver_options=solver_options,
+                          adjoint_solver_options=solver_options)
     
     return fwd_pred, problem
     

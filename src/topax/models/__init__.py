@@ -1,3 +1,0 @@
-from .simp import SIMP
-
-__all__ = ['SIMP']
