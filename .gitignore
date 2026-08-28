@@ -2,6 +2,7 @@
 experimental/
 AGENTS.md
 .DS_Store
+docs/data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

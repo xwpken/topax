@@ -1,25 +1,23 @@
 [build-system]
-requires = ["setuptools>=43.0.0", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "topax" 
-version = "0.0.1"
-requires-python = ">=3.10"
+name = "topax"
+version = "0.1.0"
+requires-python = ">=3.13"
 urls = {homepage = "https://github.com/xwpken/topax"}
-authors = [ 
+authors = [
   {name = "Weipeng Xu", email = "wxuby@connect.ust.hk"},
   {name = "Tianju Xue", email = "cetxue@ust.hk"}
 ]
-description = "Topology optimization with automatic differentiation in JAX"
+description = "Topology optimization with differentiable finite element analysis."
 dependencies = [
-    "mmapy>=0.3",
+    "mmapy>=0.3.1",
 ]
 readme = "README.md"
 license = {file = "LICENSE"}
 
-[tool.setuptools.packages]
-find = {where = ["src"]}
-
-[tool.setuptools.package-dir]
-"" = "src"
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["topax*"]

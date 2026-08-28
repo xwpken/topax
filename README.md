@@ -1,57 +1,85 @@
 # topax
-![Github Star](https://img.shields.io/github/stars/xwpken/topax) ![Github Fork](https://img.shields.io/github/forks/xwpken/topax) ![License](https://img.shields.io/github/license/xwpken/topax.svg) ![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
+**Differentiable multidisciplinary topology optimization**
 
-Topology optimization with automatic differentiaition in JAX
+A gallery of topology optimization examples with differentiable finite element analysis implemented in [JAX](https://github.com/google/jax) and [JAX-FEM](https://github.com/deepmodeling/jax-fem).
 
-## Features
+## Gallery
 
-* Differentiable finite element analysis powered by [`jax-fem`](https://github.com/deepmodeling/jax-fem)
-* Built-in classical topology optimization methods (e.g., SIMP, LSM)
-* Hands-free adjoint sensitivity analysis via automatic differentiation
+### Minimum compliance
 
-## Installation
-Since `topax` is built on top of [`jax-fem`](https://github.com/deepmodeling/jax-fem), please follow the [instructions](https://deepmodeling.github.io/jax-fem/guide/Installation.html) to install [`jax-fem`](https://github.com/deepmodeling/jax-fem) first. Then activate the built conda environment and clone this repository:
+> Andreassen, Erik, et al. “Efficient topology optimization in MATLAB using 88 lines of code.” *Structural and Multidisciplinary Optimization* 43.1 (2011): 1–16.
 
-```bash
-git clone https://github.com/xwpken/topax.git
-cd topax
-```
+| Example | Optimization history | MATLAB reference | Compliance |
+| :---: | :---: | :---: | :---: |
+| [`example_top88.ipynb`](example_top88.ipynb) | <img src="docs/imgs/example_top88.gif" width="300"> | `top88(60,20,0.5,3,2.4,1)` | 216.8137 |
+| [`example_top71.ipynb`](example_top71.ipynb) | <img src="docs/imgs/example_top71.gif" width="300"> | `top71(60,20,0.5,3,2.4,2)` | 233.7146 |
+| [`example_top82.ipynb`](example_top82.ipynb) | <img src="docs/imgs/example_top82.gif" width="300"> | `top82(150,50,0.5,3,6,1)` | 217.8814 |
+| [`example_top110.ipynb`](example_top110.ipynb) | <img src="docs/imgs/example_top110.gif" width="300"> | `top110(60,20,0.5,3,1.8,3)` | 189.1405 |
 
-then install the package locally:
+### Heat conduction
 
-```bash
-pip install -e .
-```
-For the support of [MMA](https://en.wikipedia.org/wiki/Method_of_moving_asymptotes) optimizer, please install the [`mmapy`](https://github.com/arjendeetman/GCMMA-MMA-Python) package via:
+> Bendsøe, M. P., and Sigmund, O. *Topology Optimization: Theory, Methods, and Applications*. Springer, 2004, Section 5.1.6.
 
-```bash
-pip install mmapy
-```
+| Example | Optimization history | MATLAB reference | Objective |
+| :---: | :---: | :---: | :---: |
+| [`example_topopt_heat.ipynb`](example_topopt_heat.ipynb) | <img src="docs/imgs/example_topopt_heat.gif" width="200"> | `toph(40,40,0.4,3.0,1.2)` | 447.9944 |
 
-## Quick Start
 
-Run the following command:
+### Compliant mechanism
 
-```bash
-python -m examples.top88.example.py
-```
-to reproduce the 2D cantilever beam topology optimization example in the well-known [educational paper](https://link.springer.com/article/10.1007/s00158-010-0594-7) by Erik Andreassen et al.
+> Bendsøe, M. P., and Sigmund, O. *Topology Optimization: Theory, Methods, and Applications*. Springer, 2004, Section 5.1.5.
 
-More examples can be found in the [examples](./examples) folder.
+| Example | Optimization history | MATLAB reference | Objective |
+| :---: | :---: | :---: | :---: |
+| [`example_topopt_mems.ipynb`](example_topopt_mems.ipynb) | <img src="docs/imgs/example_topopt_mems.gif" width="300"> | `topm(40,20,0.3,3.0,1.2)` | -1.1131886 |
 
-## Roadmap
-- [ ] Support multi-material design
-- [ ] Support BESO method
-- [ ] More advanced examples (e.g., design-dependent loads)
-- [ ] To be added...
+
+### Geometrical nonlinearity
+
+> Wang, F., Lazarov, B. S., Sigmund, O., and Jensen, J. S. “Interpolation scheme for fictitious domain techniques and topology optimization of finite strain elastic problems.” *Computer Methods in Applied Mechanics and Engineering* 276 (2014): 453–472.
+
+| C-shape fictitious-domain validation |
+| :---: |
+| <img src="docs/imgs/example_topopt_nlgeo_cshape.png" width="360"> |
+
+| Load | Deformed topology history | Reference | Result |
+| :---: | :---: | :---: | :---: |
+| 144 kN | <img src="docs/imgs/example_topopt_nlgeo_144kn.gif" width="400"> | 21.2747 kJ | 20.8721 kJ |
+| 240 kN | <img src="docs/imgs/example_topopt_nlgeo_240kn.gif" width="400"> | 56.9401 kJ | 58.1354 kJ |
+| 300 kN | <img src="docs/imgs/example_topopt_nlgeo_300kn.gif" width="400"> | 84.9415 kJ | 84.4505 kJ |
+
+
+### Stress constraints
+
+> Yang, D., Liu, H., Zhang, W., and Li, S. “Stress-constrained topology optimization based on maximum stress measures.” *Computers & Structures* 198 (2018): 23–39.
+
+| Example | Optimization history | Reference | Result |
+| :---: | :---: | :---: | :---: |
+| [`example_topopt_stress.ipynb`](example_topopt_stress.ipynb) | <img src="docs/imgs/example_topopt_stress.gif" width="800"> | $V/V_0=26.5\%$, $\sigma_{\max}=69.9$ | $V/V_0=26.36\%$, $\sigma_{\max}=69.999$ |
+
+### Multiple material phases
+
+> Bendsøe, M. P., and Sigmund, O. *Topology Optimization: Theory, Methods, and Applications*. Springer, 2004, Section 2.9.3.
+
+| Example | Optimization history | Materials | Compliance |
+| :---: | :---: | :---: | :---: |
+| [`example_topopt_multimaterial.ipynb`](example_topopt_multimaterial.ipynb) | <img src="docs/imgs/example_topopt_multimaterial.gif" width="700"> | $E_1=1$, $E_2=0.2$, $V_1/V_0=V_2/V_0=25\%$ | 118.7094 |
+
+### Negative Poisson's ratio
+
+> Xia, L., and Breitkopf, P. “Design of materials using topology optimization and energy-based homogenization approach in Matlab.” *Structural and Multidisciplinary Optimization* 52 (2015): 1229–1241.
+
+| Example | Optimization history | Uniaxial deformation | Reference | Result |
+| :---: | :---: | :---: | :---: | :---: |
+| [`example_topopt_auxetic.ipynb`](example_topopt_auxetic.ipynb) | <img src="docs/imgs/example_topopt_auxetic.gif" width="300"> | <img src="docs/imgs/example_topopt_auxetic_deformation.gif" width="320"> | $V/V_0=50\%$, $\nu^H=-0.448$ | $V/V_0=50\%$, $\nu^H=-0.4480$ |
 
 ## Citation
-If you find `topax` useful in your research, please consider citing this repository:
+
 ```bibtex
-@software{topaxgithub,
+@software{xu2026topax,
   author = {Weipeng Xu and Tianju Xue},
-  title = {{topax}: Topology optimization with automatic differentiaition in JAX},
-  url = {http://github.com/xwpken/topax},
-  year = {2025},
+  title = {topax: Topology optimization with differentiable finite element analysis},
+  url = {https://github.com/xwpken/topax},
+  year = {2026},
 }
 ```
