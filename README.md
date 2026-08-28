@@ -31,7 +31,7 @@ A gallery of topology optimization examples with differentiable finite element a
 
 | Example | Optimization history | MATLAB reference | Objective |
 | :---: | :---: | :---: | :---: |
-| [`example_topopt_mems.ipynb`](example_topopt_mems.ipynb) | <img src="docs/imgs/example_topopt_mems.gif" width="300"> | `topm(40,20,0.3,3.0,1.2)` | -1.1131886 |
+| [`example_topopt_mems.ipynb`](example_topopt_mems.ipynb) | <img src="docs/imgs/example_topopt_mems.gif" width="200"> | `topm(40,20,0.3,3.0,1.2)` | -1.1131886 |
 
 
 ### Geometrical nonlinearity
