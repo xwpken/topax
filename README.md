@@ -11,10 +11,10 @@ A gallery of topology optimization examples with differentiable finite element a
 
 | Example | Optimization history | MATLAB reference | Compliance |
 | :---: | :---: | :---: | :---: |
-| [`example_top88.ipynb`](example_top88.ipynb) | <img src="docs/imgs/example_top88.gif" width="300"> | `top88(60,20,0.5,3,2.4,1)` | 216.8137 |
-| [`example_top71.ipynb`](example_top71.ipynb) | <img src="docs/imgs/example_top71.gif" width="300"> | `top71(60,20,0.5,3,2.4,2)` | 233.7146 |
-| [`example_top82.ipynb`](example_top82.ipynb) | <img src="docs/imgs/example_top82.gif" width="300"> | `top82(150,50,0.5,3,6,1)` | 217.8814 |
-| [`example_top110.ipynb`](example_top110.ipynb) | <img src="docs/imgs/example_top110.gif" width="300"> | `top110(60,20,0.5,3,1.8,3)` | 189.1405 |
+| [`example_top88.ipynb`](example_top88.ipynb) | <img src="docs/imgs/example_top88.gif" width="200"> | `top88(60,20,0.5,3,2.4,1)` | 216.8137 |
+| [`example_top71.ipynb`](example_top71.ipynb) | <img src="docs/imgs/example_top71.gif" width="200"> | `top71(60,20,0.5,3,2.4,2)` | 233.7146 |
+| [`example_top82.ipynb`](example_top82.ipynb) | <img src="docs/imgs/example_top82.gif" width="200"> | `top82(150,50,0.5,3,6,1)` | 217.8814 |
+| [`example_top110.ipynb`](example_top110.ipynb) | <img src="docs/imgs/example_top110.gif" width="200"> | `top110(60,20,0.5,3,1.8,3)` | 189.1405 |
 
 ### Heat conduction
 
@@ -55,7 +55,7 @@ A gallery of topology optimization examples with differentiable finite element a
 
 | Example | Optimization history | Reference | Result |
 | :---: | :---: | :---: | :---: |
-| [`example_topopt_stress.ipynb`](example_topopt_stress.ipynb) | <img src="docs/imgs/example_topopt_stress.gif" width="800"> | $V/V_0=26.5\%$, $\sigma_{\max}=69.9$ | $V/V_0=26.36\%$, $\sigma_{\max}=69.999$ |
+| [`example_topopt_stress.ipynb`](example_topopt_stress.ipynb) | <img src="docs/imgs/example_topopt_stress.gif" width="500"> | $V/V_0=26.5\%$, $\sigma_{\max}=69.9$ | $V/V_0=26.36\%$, $\sigma_{\max}=69.999$ |
 
 ### Multiple material phases
 
@@ -63,7 +63,7 @@ A gallery of topology optimization examples with differentiable finite element a
 
 | Example | Optimization history | Materials | Compliance |
 | :---: | :---: | :---: | :---: |
-| [`example_topopt_multimaterial.ipynb`](example_topopt_multimaterial.ipynb) | <img src="docs/imgs/example_topopt_multimaterial.gif" width="700"> | $E_1=1$, $E_2=0.2$, $V_1/V_0=V_2/V_0=25\%$ | 118.7094 |
+| [`example_topopt_multimaterial.ipynb`](example_topopt_multimaterial.ipynb) | <img src="docs/imgs/example_topopt_multimaterial.gif" width="400"> | $E_1=1$, $E_2=0.2$, $V_1/V_0=V_2/V_0=25\%$ | 118.7094 |
 
 ### Negative Poisson's ratio
 
@@ -71,7 +71,7 @@ A gallery of topology optimization examples with differentiable finite element a
 
 | Example | Optimization history | Uniaxial deformation | Reference | Result |
 | :---: | :---: | :---: | :---: | :---: |
-| [`example_topopt_auxetic.ipynb`](example_topopt_auxetic.ipynb) | <img src="docs/imgs/example_topopt_auxetic.gif" width="300"> | <img src="docs/imgs/example_topopt_auxetic_deformation.gif" width="320"> | $V/V_0=50\%$, $\nu^H=-0.448$ | $V/V_0=50\%$, $\nu^H=-0.4480$ |
+| [`example_topopt_auxetic.ipynb`](example_topopt_auxetic.ipynb) | <img src="docs/imgs/example_topopt_auxetic.gif" width="150"> | <img src="docs/imgs/example_topopt_auxetic_deformation.gif" width="180"> | $V/V_0=50\%$, $\nu^H=-0.448$ | $V/V_0=50\%$, $\nu^H=-0.4480$ |
 
 ## Citation
 
