@@ -55,7 +55,7 @@ A gallery of topology optimization examples with differentiable finite element a
 
 | Example | Optimization history | Reference | Result |
 | :---: | :---: | :---: | :---: |
-| [`example_topopt_stress.ipynb`](example_topopt_stress.ipynb) | <img src="docs/imgs/example_topopt_stress.gif" width="500"> | $V/V_0=26.5\%$, $\sigma_{\max}=69.9$ | $V/V_0=26.36\%$, $\sigma_{\max}=69.999$ |
+| [`example_topopt_stress.ipynb`](example_topopt_stress.ipynb) | <img src="docs/imgs/example_topopt_stress.gif" width="400"> | $V/V_0=26.5\%$, $\sigma_{\max}=69.9$ | $V/V_0=26.36\%$, $\sigma_{\max}=69.999$ |
 
 ### Multiple material phases
 
@@ -63,7 +63,7 @@ A gallery of topology optimization examples with differentiable finite element a
 
 | Example | Optimization history | Materials | Compliance |
 | :---: | :---: | :---: | :---: |
-| [`example_topopt_multimaterial.ipynb`](example_topopt_multimaterial.ipynb) | <img src="docs/imgs/example_topopt_multimaterial.gif" width="400"> | $E_1=1$, $E_2=0.2$, $V_1/V_0=V_2/V_0=25\%$ | 118.7094 |
+| [`example_topopt_multimaterial.ipynb`](example_topopt_multimaterial.ipynb) | <img src="docs/imgs/example_topopt_multimaterial.gif" width="300"> | $E_1=1$, $E_2=0.2$, $V_1/V_0=V_2/V_0=25\%$ | 118.7094 |
 
 ### Negative Poisson's ratio
 
